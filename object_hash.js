@@ -166,6 +166,8 @@ exports.getChash288 = getChash288;
 exports.getHexHash = getHexHash;
 exports.getBase64Hash = getBase64Hash;
 
+exports.getNakedUnit = getNakedUnit
+
 exports.getUnitContentHash = getUnitContentHash;
 exports.getUnitHash = getUnitHash;
 exports.getUnitHashToSign = getUnitHashToSign;
