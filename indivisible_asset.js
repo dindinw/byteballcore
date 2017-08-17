@@ -64,6 +64,10 @@ function validatePrivatePayment(conn, objPrivateElement, objPrevPrivateElement, 
 	var our_hidden_output = payload.outputs[objPrivateElement.output_index];
 	if (!ValidationUtils.isNonemptyObject(payload.outputs[objPrivateElement.output_index]))
 		return callbacks.ifError("no output at output_index");
+	if (!ValidationUtils.isValidAddress(objPrivateElement.output.address))
+		return callbacks.ifError("bad address in output");
+	if (!ValidationUtils.isNonemptyString(objPrivateElement.output.blinding))
+		return callbacks.ifError("bad blinding in output");
 	if (objectHash.getBase64Hash(objPrivateElement.output) !== our_hidden_output.output_hash)
 		return callbacks.ifError("output hash doesn't match, output="+JSON.stringify(objPrivateElement.output)+", hash="+our_hidden_output.output_hash);
 	if (!ValidationUtils.isArrayOfLength(payload.inputs, 1))
@@ -942,6 +946,8 @@ function restorePrivateChains(asset, unit, to_address, handleChains){
 								function(outputs){
 									if (outputs.length === 0)
 										throw Error("outputs not found for mi "+message_index);
+									if (!outputs.some(function(output){ return (output.address && output.blinding); }))
+										throw Error("all outputs are hidden");
 									payload.outputs = outputs;
 									var hidden_payload = _.cloneDeep(payload);
 									hidden_payload.outputs.forEach(function(o){
@@ -954,6 +960,8 @@ function restorePrivateChains(asset, unit, to_address, handleChains){
 									async.forEachOfSeries(
 										payload.outputs,
 										function(output, output_index, cb3){
+											if (!output.address || !output.blinding) // skip
+												return cb3();
 											// we have only heads of the chains so far. Now add the tails.
 											buildPrivateElementsChain(
 												db, unit, message_index, output_index, payload, 
